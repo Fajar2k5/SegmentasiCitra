@@ -1,0 +1,11 @@
+# Dependensi inferensi Bagian D (DeepLabV3+ / CamVid 11 kelas)
+# Pasang dengan environment Python yang sama dengan yang diisi di GUI:
+#   python -m pip install -r model/requirements.txt
+#
+# Untuk CUDA, pasang torch/torchvision sesuai versi CUDA dari
+# https://pytorch.org/get-started/locally/ terlebih dahulu, lalu paket lain.
+numpy>=1.23
+opencv-python>=4.7
+torch>=2.0
+torchvision>=0.15
+segmentation-models-pytorch>=0.3.3

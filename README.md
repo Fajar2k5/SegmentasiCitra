@@ -8,7 +8,7 @@ semantic segmentation menggunakan model terlatih **DeepLabV3+**
 (encoder ResNet-50 atau ResNet-101) pada **11 kelas CamVid**.
 
 ## Link ke Dataset CamVid
-
+Repositori dataset: [https://github.com/PengKiKi/camvid](https://github.com/PengKiKi/camvid)
 
 ## Fitur
 

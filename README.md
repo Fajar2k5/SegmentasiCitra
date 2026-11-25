@@ -169,3 +169,44 @@ Simpan `SegmentasiCitraPython.m` di folder yang sama dengan `SegmentasiCitraApp.
 8. Gunakan **Simpan Hasil** untuk menyalin mask dan overlay ke folder pilihan.
    **Buka Output** membuka folder sementara hasil inferensi. Tidak ada file
    metadata JSON yang dibuat atau disalin.
+
+## Bagian B dan C (MATLAB)
+
+Jalankan `SegmentasiCitraApp`, lalu pilih tab B atau C. Keduanya memerlukan
+**Image Processing Toolbox**. Pilih salah satu
+8 citra bawaan atau buka citra lain, sesuaikan parameter, kemudian klik Proses.
+Tombol Uji 8 citra menjalankan `runClassicalTests` dan menyimpan PNG serta CSV
+ke `results_classical/` (nama yang sama ditimpa pada pengujian berikutnya).
+
+- `segmentEdges.m`: Sobel, Prewitt, Roberts memakai kernel gradien manual,
+  Laplace memakai kernel turunan kedua, LoG memakai kernel analitis dengan
+  sigma yang dapat diubah. Laplace/LoG menggunakan magnitudo respons, bukan
+  zero crossing. Hanya Canny memanggil fungsi `edge` MATLAB.
+- Threshold B adalah fraksi maksimum respons (Canny memakai threshold tinggi
+  ternormalisasi MATLAB). Nilai lebih tinggi mengurangi tepi lemah. Sigma
+  mengatur skala LoG/Canny; radius closing menghubungkan celah tepi.
+- Region objek dibentuk dengan closing, pengisian lubang, dan pemilihan komponen
+  terbesar. Ini heuristik region utama, bukan pengenal objek semantik. Tekstur,
+  latar dominan, dan kontur terbuka dapat menghasilkan region yang kurang tepat;
+  tinjau hasil visual dan sesuaikan threshold/radius per citra. Citra tanpa tepi
+  menghasilkan mask kosong, bukan objek buatan.
+- `splitMerge.m`: divide and conquer membagi empat region sampai standar deviasi
+  populasi grayscale [0,1] <= threshold atau sisi terkecil <= ukuran minimum.
+  Daun akibat batas ukuran tidak dijamin homogen. Semua pasangan tetangga
+  4-connected dipertimbangkan untuk merge jika standar deviasi gabungannya
+  <= threshold. Statistik berbobot jumlah piksel diperbarui setiap merge;
+  iterasi berhenti setelah tidak ada merge yang diterima. Hasil deterministik
+  tetapi bergantung pada urutan pasangan. Warna output adalah rerata RGB region.
+- Threshold C kecil mempertahankan detail dan umumnya menghasilkan lebih banyak
+  region; threshold besar menggabungkan variasi yang lebih besar. Ukuran minimum
+  besar mempercepat split tetapi dapat menghilangkan detail kecil. Parameter
+  dihitung pada grayscale, sehingga warna berbeda dengan luminansi sama dapat
+  tergabung.
+
+
+## Preset parameter tab B
+
+Pilih citra lalu klik **Preset citra** untuk menerapkan hasil peninjauan visual
+pada `edge_presets.csv`. Preset mengatur operator, threshold, sigma, radius,
+dan menghapus titik pilihan sebelumnya. Tombol Proses tetap memakai nilai
+manual

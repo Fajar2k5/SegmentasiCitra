@@ -1,0 +1,9 @@
+Image,Method,Threshold,Sigma,Radius,MinSize,AreaOrRegions,Seconds
+100007,SplitMerge,0.08,NaN,NaN,8,93,0.0501484
+101027,SplitMerge,0.08,NaN,NaN,8,1205,0.0483235
+104010,SplitMerge,0.04,NaN,NaN,8,2348,0.0616032
+118072,SplitMerge,0.08,NaN,NaN,8,628,0.05031
+120003,SplitMerge,0.08,NaN,NaN,8,332,0.044627
+181021,SplitMerge,0.08,NaN,NaN,8,554,0.045002
+2018,SplitMerge,0.08,NaN,NaN,8,931,0.0581536
+220003,SplitMerge,0.08,NaN,NaN,8,973,0.0545859

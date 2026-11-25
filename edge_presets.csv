@@ -1,0 +1,10 @@
+Image,Method,Threshold,Sigma,Radius,GridID,Note
+100007,Canny,0.15,2.5,2,99,Beruang cukup utuh; detail batas kaki masih perlu ditinjau.
+101027,Sobel,0.15,4,2,11,Hamparan karang putih terambil; bukan seluruh ekosistem karang.
+104010,Canny,0.07,1,2,91,Hanya region wajah rusa; belum ada kandidat rusa utuh yang baik.
+118072,Canny,0.30,2.5,2,105,Region bukaan lengkung atas; bukan seluruh bangunan.
+120003,Roberts,0.15,1,2,43,Badan wadah terambil; batang vertikal tidak ikut.
+181021,Canny,0.30,2.5,6,106,Kepala badan dan kaki lebih lengkap; sebagian tangga masih ikut.
+2018,Sobel,0.15,1,2,7,Sebagian snowshoe kanan terambil; bagian bawah belum utuh.
+220003,Laplace,0.07,1,2,55,Region kuda lebih luas; sebagian rumput dan kuda sebelah ikut.
+

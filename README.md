@@ -1,3 +1,6 @@
+# WARNING
+Perlu menginstall `git lfs` agar bisa clone repository secara utuh karena ada file `.pth` checkpoint model.
+
 # SegmentasiCitra
 
 Tugas 3 IF4073 Pemrosesan Citra Digital - Segmentasi Citra dengan Deteksi Tepi,

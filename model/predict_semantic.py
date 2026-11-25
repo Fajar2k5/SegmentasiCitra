@@ -1,8 +1,11 @@
-"""Inferensi semantic segmentation CamVid 11 kelas (DeepLabV3+ ResNet-50).
+"""Inferensi semantic segmentation CamVid 11 kelas (DeepLabV3+).
 
-API: predict_to_files(image, weights, mask, overlay, alpha=0.45, use_tta=True,
-metadata_path=None, device=None). Persentase kelas adalah cakupan area piksel,
-bukan akurasi. CLI: python predict_semantic.py input.png best.pth [opsi...].
+Encoder dan ukuran input dibaca dari checkpoint, checkpoint ResNet-50
+maupun ResNet-101 dapat dimuat.
+API: predict_to_files(
+image, weights, mask, overlay, alpha=0.45, use_tta=True, metadata_path=None,
+device=None).
+CLI: python predict_semantic.py input.png best.pth [opsi...].
 """
 
 from __future__ import annotations
@@ -10,7 +13,7 @@ from __future__ import annotations
 import argparse, json, os, platform, sys, time
 from datetime import datetime, timezone
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 CLASS_NAMES = [
     "Sky", "Building", "Pole", "Road", "Pavement",
     "Tree", "SignSymbol", "Fence", "Car", "Pedestrian", "Bicyclist",
@@ -121,7 +124,13 @@ def load_model(weights_path, device=None):
 
     img_h = int(checkpoint.get("img_height", 384))
     img_w = int(checkpoint.get("img_width", 512))
-    encoder_name = str(checkpoint.get("encoder") or "resnet50")
+    # Checkpoint v3 memakai "encoder_name"; checkpoint lama dapat memakai
+    # "encoder" atau tidak menyimpan encoder sama sekali (ResNet-50).
+    encoder_name = str(checkpoint.get("encoder_name")
+                       or checkpoint.get("encoder")
+                       or "resnet50")
+    architecture = str(checkpoint.get("architecture")
+                       or checkpoint.get("arch") or "DeepLabV3+")
     model = smp.DeepLabV3Plus(encoder_name=encoder_name, encoder_weights=None,
                               in_channels=3, classes=len(CLASS_NAMES))
     state_dict = checkpoint["model_state_dict"]
@@ -131,10 +140,10 @@ def load_model(weights_path, device=None):
         model.load_state_dict(state_dict)
     except Exception as exc:
         raise InferenceError("Bobot checkpoint tidak cocok dengan arsitektur "
-                             "DeepLabV3+ ResNet-50: %s" % exc) from exc
+                             "DeepLabV3+ (%s): %s" % (encoder_name, exc)) from exc
     model.to(resolved).eval()
 
-    info = {"architecture": str(checkpoint.get("architecture") or "DeepLabV3+"),
+    info = {"architecture": architecture,
             "encoder": encoder_name, "num_classes": len(CLASS_NAMES),
             "class_names": list(CLASS_NAMES), "checkpoint": weights_path,
             "checkpoint_name": os.path.basename(weights_path),
@@ -281,8 +290,9 @@ def _alpha_argument(value):
 def build_arg_parser():
     parser = argparse.ArgumentParser(
         description=("Inferensi semantic segmentation CamVid 11 kelas "
-                     "(DeepLabV3+ ResNet-50). Persentase kelas yang dilaporkan "
-                     "adalah cakupan area, bukan akurasi."),
+                     "(DeepLabV3+; encoder dan ukuran input mengikuti "
+                     "checkpoint). Persentase kelas yang dilaporkan adalah "
+                     "cakupan area, bukan akurasi."),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("image", help="Path citra masukan")
     parser.add_argument("weights", help="Path checkpoint .pth")

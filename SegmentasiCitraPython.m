@@ -127,6 +127,15 @@ classdef SegmentasiCitraPython
                         message, installCommand);
                 end
             end
+            if contains(message, 'Bobot checkpoint tidak cocok') || ...
+                    contains(message, 'Checkpoint tidak valid')
+                hint = ['Jika predict_semantic.py baru saja diperbarui, ' ...
+                    'tutup lalu buka ulang MATLAB sekali agar modul Python ' ...
+                    'lama tidak dipakai.'];
+                if ~contains(message, hint)
+                    message = sprintf('%s\n\n%s', message, hint);
+                end
+            end
         end
     end
 
@@ -134,16 +143,69 @@ classdef SegmentasiCitraPython
         function [module, modulePath] = importModule(scriptPath, pythonExe, ...
                 rootDir, fieldValue)
             py.sys.path().insert(int32(0), fileparts(scriptPath));
-            try % Bersihkan modul lama yang mungkin berasal dari path berbeda.
+            sourceStamp = SegmentasiCitraPython.sourceStamp(scriptPath);
+            sourceVersion = SegmentasiCitraPython.sourceVersion(scriptPath);
+            haveExisting = false; existing = []; stale = false;
+            try
                 pyModules = py.sys.modules;
                 existing = pyModules{'predict_semantic'};
-                if ~SegmentasiCitraPython.samePath( ...
-                        char(py.getattr(existing, '__file__')), scriptPath)
-                    pyModules.pop('predict_semantic', py.None);
-                end
+                haveExisting = true;
             catch
             end
-            try module = py.importlib.import_module('predict_semantic');
+            if haveExisting
+                existingPath = '';
+                try existingPath = char(py.getattr(existing, '__file__')); catch; end
+                if isempty(existingPath) || ...
+                        ~SegmentasiCitraPython.samePath(existingPath, scriptPath)
+                    % Modul lama dari path lain: buang agar diimpor ulang.
+                    try
+                        pyModules = py.sys.modules;
+                        pyModules.pop('predict_semantic', py.None);
+                    catch
+                    end
+                    haveExisting = false;
+                else
+                    % Modul dari path yang sama bisa saja masih versi lama
+                    % (sys.modules tidak otomatis mengikuti perubahan file).
+                    loadedStamp = '';
+                    try
+                        loadedStamp = char(py.getattr(existing, ...
+                            '_MATLAB_SCRIPT_STAMP'));
+                    catch
+                    end
+                    loadedVersion = '';
+                    try
+                        loadedVersion = char(py.getattr(existing, '__version__'));
+                    catch
+                    end
+                    if isempty(loadedStamp)
+                        stale = true; % Modul lama belum memiliki penanda.
+                    elseif ~strcmp(loadedStamp, sourceStamp)
+                        stale = true;
+                    elseif ~isempty(sourceVersion) && ...
+                            ~strcmp(loadedVersion, sourceVersion)
+                        stale = true;
+                    end
+                end
+            end
+            try
+                if haveExisting && ~stale
+                    module = existing;
+                elseif haveExisting
+                    try
+                        module = py.importlib.reload(existing);
+                    catch
+                        % Reload gagal: bersihkan cache lalu impor dari file.
+                        try
+                            pyModules = py.sys.modules;
+                            pyModules.pop('predict_semantic', py.None);
+                        catch
+                        end
+                        module = py.importlib.import_module('predict_semantic');
+                    end
+                else
+                    module = py.importlib.import_module('predict_semantic');
+                end
             catch ME
                 error('SegmentasiCitraApp:PythonImportFailed', ...
                     ['Modul predict_semantic gagal diimpor dari:\n%s\n\n%s\n\n' ...
@@ -177,6 +239,31 @@ classdef SegmentasiCitraPython
                     'Setelah instalasi selesai, klik "Jalankan Inferensi" lagi.'], ...
                     depError, pythonExe, SegmentasiCitraPython.pipCommand( ...
                     pythonExe, fieldValue, rootDir));
+            end
+            % Penanda isi script saat ini; dipakai untuk mendeteksi modul
+            % basi pada pemanggilan berikutnya tanpa reload yang sia-sia.
+            try py.setattr(module, '_MATLAB_SCRIPT_STAMP', sourceStamp); catch; end
+        end
+
+        function stamp = sourceStamp(scriptPath)
+            stamp = '';
+            info = dir(scriptPath);
+            if isempty(info), return; end
+            millis = 0;
+            try millis = double(java.io.File(scriptPath).lastModified()); catch; end
+            if millis <= 0, millis = double(info.datenum); end
+            stamp = sprintf('%.0f:%0.0f', millis, double(info.bytes));
+        end
+
+        function version = sourceVersion(scriptPath)
+            version = '';
+            try
+                text = fileread(scriptPath);
+                token = regexp(text, ...
+                    '__version__\s*=\s*[''"]([^''"]+)[''"]', ...
+                    'tokens', 'once');
+                if ~isempty(token), version = token{1}; end
+            catch
             end
         end
 

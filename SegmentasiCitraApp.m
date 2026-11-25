@@ -67,7 +67,7 @@ classdef SegmentasiCitraApp < matlab.apps.AppBase
                 'FontSize', 20, 'FontWeight', 'bold', 'FontColor', [0.15 0.20 0.28]);
             title.Layout.Row = 1;
             subtitle = uilabel(headerGrid, 'Text', ['GUI MATLAB  |  Bagian D: ' ...
-                'Semantic Segmentation (DeepLabV3+ ResNet-50)  |  Bagian B/C: ' ...
+                'Semantic Segmentation (DeepLabV3+)  |  Bagian B/C: ' ...
                 'belum diimplementasikan'], 'FontSize', 11, ...
                 'FontColor', [0.38 0.42 0.48]);
             subtitle.Layout.Row = 2;
@@ -105,8 +105,14 @@ classdef SegmentasiCitraApp < matlab.apps.AppBase
             envPython = getenv('SEGMENTASI_PYTHON');
             if ~isempty(envPython), defaultPython = envPython; end
             app.PythonField.Value = defaultPython;
+            % Utamakan checkpoint terbaru (ResNet-101) di model/; fallback ke
+            % checkpoint ResNet-50 lama di folder yang sama.
             app.WeightsField.Value = fullfile(app.RootDir, 'model', ...
-                'best_deeplabv3plus_resnet50_camvid.pth');
+                'best_deeplabv3plus_resnet101_camvid_v3.pth');
+            if ~isfile(app.WeightsField.Value)
+                app.WeightsField.Value = fullfile(app.RootDir, 'model', ...
+                    'best_deeplabv3plus_resnet50_camvid.pth');
+            end
             if isfile(app.WeightsField.Value) && isfile(app.InferenceScript)
                 setStatus(app, ['Siap. Pilih citra, lalu klik "Jalankan Inferensi". ' ...
                     'Python dimuat in-process saat inferensi.'], 'info');

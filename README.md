@@ -17,7 +17,8 @@ Repositori dataset: [https://github.com/PengKiKi/camvid](https://github.com/Peng
 - Inferensi dengan model deep learning.
 - Menampilkan citra masukan, mask berwarna, dan overlay.
 - Pengaturan TTA (flip horizontal), alpha overlay, dan perangkat (auto/cpu/cuda).
-- **Simpan Hasil** mask, overlay, dan metadata ke folder pilihan pengguna.
+- **Simpan Hasil** mask dan overlay ke folder pilihan pengguna.
+- GUI menghasilkan mask berwarna dan overlay.
 
 ## Struktur Repositori
 
@@ -27,7 +28,7 @@ SegmentasiCitra/
 ├── SegmentasiCitraPython.m    # Helper pyenv dan inferensi in-process
 ├── CitraSegMatlab.prj         # Proyek MATLAB
 ├── model/
-│   ├── predict_semantic.py    # Satu-satunya script inferensi + CLI + metadata JSON
+│   ├── predict_semantic.py
 │   ├── requirements.txt       # Dependensi Python
 │   ├── best_deeplabv3plus_resnet101_camvid_v3.pth  # default bila ada
 │   └── best_deeplabv3plus_resnet50_camvid.pth      # fallback
@@ -62,7 +63,8 @@ model/best_deeplabv3plus_resnet101_camvid_v3.pth   # default GUI (ResNet-101, 48
 model/best_deeplabv3plus_resnet50_camvid.pth       # fallback (ResNet-50, 384x512)
 ```
 
-Skrip inferensi `model/predict_semantic.py` membaca model dengan ResNet-50atau ResNet-101.
+Skrip inferensi `model/predict_semantic.py` membaca model dengan ResNet-50 atau
+ResNet-101 dan hanya menulis mask berwarna serta overlay.
 ## Setup
 
 ### 1. Siapkan Python
@@ -118,6 +120,13 @@ dan memuatnya ke dalam proses MATLAB.
 Pilihan `pyenv` disimpan MATLAB untuk sesi berikutnya. Jika sudah benar, GUI
 akan memakai environment yang sama tanpa memuat ulang interpreter.
 
+GUI memeriksa timestamp dan versi `model/predict_semantic.py` setiap kali
+inferensi dijalankan. Jika file itu berubah, modul Python dimuat ulang
+otomatis; jika tidak berubah, model yang sudah dimuat tetap dipakai dari cache.
+Perubahan pada file `.m` tetap memerlukan **restart MATLAB sekali** agar
+definisi kelas diperbarui; setelah itu menutup dan membuka kembali GUI sudah
+cukup untuk memakai perubahan skrip Python.
+
 ### 3. Jalankan GUI MATLAB
 
 Buka `CitraSegMatlab.prj` di MATLAB, lalu dari Command Window:
@@ -157,5 +166,6 @@ Simpan `SegmentasiCitraPython.m` di folder yang sama dengan `SegmentasiCitraApp.
 5. Atur **TTA**, **Alpha overlay**, dan **Perangkat**.
 6. Klik **Jalankan Inferensi**.
 7. Lihat citra masukan, mask berwarna, dan overlay pada panel tampilan utama.
-8. Gunakan **Simpan Hasil** untuk menyalin hasil ke folder pilihan.
-   **Buka Output** membuka folder sementara hasil inferensi.
+8. Gunakan **Simpan Hasil** untuk menyalin mask dan overlay ke folder pilihan.
+   **Buka Output** membuka folder sementara hasil inferensi. Tidak ada file
+   metadata JSON yang dibuat atau disalin.

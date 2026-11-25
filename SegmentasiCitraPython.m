@@ -1,6 +1,5 @@
 classdef SegmentasiCitraPython
     % Integrasi pyenv in-process dan inferensi DeepLabV3+ untuk GUI.
-    % Semua inferensi berjalan di dalam proses MATLAB, bukan lewat system().
 
     methods (Static)
         function pythonExe = resolveExecutable(value)
@@ -95,12 +94,12 @@ classdef SegmentasiCitraPython
         end
 
         function run(module, imagePath, weightsPath, maskPath, overlayPath, ...
-                alpha, useTta, metadataPath, device)
+                alpha, useTta, device)
             % Memanggil API Python yang sama dengan CLI, tanpa subprocess.
             try
                 module.predict_to_files(char(imagePath), char(weightsPath), ...
                     char(maskPath), char(overlayPath), double(alpha), ...
-                    py.bool(logical(useTta)), char(metadataPath), char(device));
+                    py.bool(logical(useTta)), char(device));
             catch ME
                 if strcmp(ME.identifier, 'MATLAB:Python:PyException')
                     error('SegmentasiCitraApp:InferenceFailed', '%s', ...
@@ -241,7 +240,7 @@ classdef SegmentasiCitraPython
                     pythonExe, fieldValue, rootDir));
             end
             % Penanda isi script saat ini; dipakai untuk mendeteksi modul
-            % basi pada pemanggilan berikutnya tanpa reload yang sia-sia.
+            % pada pemanggilan berikutnya tanpa reload.
             try py.setattr(module, '_MATLAB_SCRIPT_STAMP', sourceStamp); catch; end
         end
 

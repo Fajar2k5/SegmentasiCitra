@@ -300,7 +300,6 @@ classdef SegmentasiCitraApp < matlab.apps.AppBase
                 if ~isfolder(runDir), mkdir(runDir); end
                 maskPath = fullfile(runDir, 'mask.png');
                 overlayPath = fullfile(runDir, 'overlay.png');
-                metadataPath = fullfile(runDir, 'metadata.json');
                 try showImage(app, app.AxesInput, imread(imagePath), 'Citra Masukan');
                 catch; end % Pratinjau gagal tidak menghalangi inferensi.
                 clearResultViews(app);
@@ -319,24 +318,19 @@ classdef SegmentasiCitraApp < matlab.apps.AppBase
                 drawnow; startTime = tic;
                 SegmentasiCitraPython.run(pyModule, imagePath, weightsPath, ...
                     maskPath, overlayPath, double(app.AlphaSlider.Value), ...
-                    logical(app.TTACheckBox.Value), metadataPath, ...
-                    app.DeviceDropDown.Value);
+                    logical(app.TTACheckBox.Value), app.DeviceDropDown.Value);
                 wallSeconds = toc(startTime);
-                if ~isfile(metadataPath)
-                    error('SegmentasiCitraApp:MissingMetadata', ...
-                        ['Python selesai tanpa menghasilkan metadata JSON. ' ...
+                if ~isfile(maskPath) || ~isfile(overlayPath)
+                    error('SegmentasiCitraApp:MissingOutput', ...
+                        ['Python selesai tanpa menghasilkan mask/overlay. ' ...
                         'Pastikan model/predict_semantic.py versi terbaru digunakan.']);
                 end
-                metadata = readMetadata(app, metadataPath);
-                showImage(app, app.AxesMask, imread(char(metadata.outputs.mask)), ...
-                    'Mask Berwarna');
-                showImage(app, app.AxesOverlay, ...
-                    imread(char(metadata.outputs.overlay)), 'Overlay');
+                showImage(app, app.AxesMask, imread(maskPath), 'Mask Berwarna');
+                showImage(app, app.AxesOverlay, imread(overlayPath), 'Overlay');
                 app.LastResult = struct('imagePath', imagePath, ...
-                    'maskPath', char(metadata.outputs.mask), ...
-                    'overlayPath', char(metadata.outputs.overlay), ...
-                    'metadataPath', metadataPath, 'outputDir', runDir, ...
-                    'pythonExe', pythonExe, 'pythonModule', app.LastPythonModulePath);
+                    'maskPath', maskPath, 'overlayPath', overlayPath, ...
+                    'outputDir', runDir, 'pythonExe', pythonExe, ...
+                    'pythonModule', app.LastPythonModulePath);
                 app.LastOutputDir = runDir;
                 app.SaveButton.Enable = 'on'; app.OpenOutputButton.Enable = 'on';
                 setStatus(app, sprintf( ...
@@ -357,18 +351,6 @@ classdef SegmentasiCitraApp < matlab.apps.AppBase
                 delete(progressDialog);
             end
             app.RunButton.Enable = 'on';
-        end
-
-        function metadata = readMetadata(~, metadataPath)
-            try metadata = jsondecode(fileread(metadataPath));
-            catch ME
-                error('SegmentasiCitraApp:InvalidMetadata', ...
-                    'Metadata JSON tidak dapat dibaca: %s', ME.message);
-            end
-            if ~isfield(metadata, 'ok') || ~logical(metadata.ok)
-                error('SegmentasiCitraApp:InvalidMetadata', ...
-                    'Metadata JSON tidak menyatakan hasil yang berhasil.');
-            end
         end
 
         function showImage(~, ax, img, titleText)
@@ -413,8 +395,7 @@ classdef SegmentasiCitraApp < matlab.apps.AppBase
             [~, base] = fileparts(app.LastResult.imagePath);
             stamp = char(datetime('now', 'Format', 'yyyyMMdd_HHmmss'));
             files = {app.LastResult.maskPath, 'mask', 'png'; ...
-                app.LastResult.overlayPath, 'overlay', 'png'; ...
-                app.LastResult.metadataPath, 'metadata', 'json'};
+                app.LastResult.overlayPath, 'overlay', 'png'};
             try
                 for i = 1:size(files, 1)
                     copyfile(files{i, 1}, fullfile(folder, sprintf( ...
